@@ -1,0 +1,1507 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agentic Modern Data</title>
+
+    <!-- Fonts: Fraunces (distinctive display serif) + Work Sans (clean body) + JetBrains Mono -->
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,700;0,9..144,900;1,9..144,400;1,9..144,700&family=Work+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+    <style>
+        /* ===========================================
+           CSS CUSTOM PROPERTIES (THEME)
+           Vintage Editorial — cream, charcoal, warm accents
+           =========================================== */
+        :root {
+            /* Palette */
+            --cream: #f5f2eb;
+            --cream-dark: #ebe7dc;
+            --charcoal: #1a1a1a;
+            --ink: #2c2c2c;
+            --text-secondary: #6b6560;
+            --text-muted: #9e9890;
+            --warm: #c65d2a;
+            --warm-dim: rgba(198, 93, 42, 0.1);
+            --terracotta: #c4553d;
+            --gold: #b8941f;
+            --sage: #5a7a5e;
+            --sage-dim: rgba(90, 122, 94, 0.1);
+            --dusty-blue: #5b7e9e;
+            --dusty-blue-dim: rgba(91, 126, 158, 0.1);
+            --plum: #7a5480;
+            --plum-dim: rgba(122, 84, 128, 0.1);
+            --rule: rgba(0, 0, 0, 0.08);
+
+            /* Module accent colors */
+            --mod0: #5b7e9e;
+            --mod1: #7a5480;
+            --mod2: #c65d2a;
+            --mod3: #b8941f;
+            --mod4: #5a7a5e;
+
+            /* Typography */
+            --font-display: 'Fraunces', serif;
+            --font-body: 'Work Sans', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+
+            /* Responsive sizes via clamp() */
+            --title-size: clamp(2.4rem, 7vw, 5.5rem);
+            --h2-size: clamp(1.5rem, 3.8vw, 2.8rem);
+            --body-size: clamp(0.75rem, 1.35vw, 1.05rem);
+            --small-size: clamp(0.62rem, 0.95vw, 0.8rem);
+            --mono-size: clamp(0.6rem, 1vw, 0.78rem);
+
+            /* Spacing */
+            --slide-padding: clamp(1.5rem, 5vw, 5rem);
+            --content-gap: clamp(0.5rem, 2vw, 2rem);
+            --element-gap: clamp(0.25rem, 1vw, 1rem);
+
+            /* Animation */
+            --ease: cubic-bezier(0.16, 1, 0.3, 1);
+            --duration: 0.6s;
+        }
+
+        /* ===========================================
+           VIEWPORT FITTING: MANDATORY BASE STYLES
+           =========================================== */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html, body {
+            height: 100%;
+            overflow-x: hidden;
+            background: var(--cream);
+            color: var(--charcoal);
+        }
+        html {
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+        }
+
+        .slide {
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
+            overflow: hidden;
+            scroll-snap-align: start;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            background: var(--cream);
+        }
+
+        .slide-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            max-height: 100%;
+            overflow: hidden;
+            padding: var(--slide-padding);
+            position: relative;
+            z-index: 2;
+        }
+
+        .card, .container, .content-box {
+            max-width: min(90vw, 1000px);
+            max-height: min(80vh, 700px);
+        }
+
+        .feature-list, .bullet-list {
+            gap: clamp(0.4rem, 1vh, 1rem);
+        }
+        .feature-list li, .bullet-list li {
+            font-size: var(--body-size);
+            line-height: 1.4;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));
+            gap: clamp(0.5rem, 1.5vw, 1rem);
+        }
+
+        img, .image-container {
+            max-width: 100%;
+            max-height: min(50vh, 400px);
+            object-fit: contain;
+        }
+
+        /* === Responsive breakpoints === */
+        @media (max-height: 700px) {
+            :root {
+                --slide-padding: clamp(0.75rem, 3vw, 2rem);
+                --content-gap: clamp(0.4rem, 1.5vw, 1rem);
+                --title-size: clamp(1.25rem, 4.5vw, 2.5rem);
+                --h2-size: clamp(1rem, 3vw, 1.75rem);
+            }
+        }
+        @media (max-height: 600px) {
+            :root {
+                --slide-padding: clamp(0.5rem, 2.5vw, 1.5rem);
+                --content-gap: clamp(0.3rem, 1vw, 0.75rem);
+                --title-size: clamp(1.1rem, 4vw, 2rem);
+                --body-size: clamp(0.7rem, 1.2vw, 0.95rem);
+            }
+            .nav-dots, .keyboard-hint, .decorative, .geo-accent { display: none; }
+        }
+        @media (max-height: 500px) {
+            :root {
+                --slide-padding: clamp(0.4rem, 2vw, 1rem);
+                --title-size: clamp(1rem, 3.5vw, 1.5rem);
+                --h2-size: clamp(0.9rem, 2.5vw, 1.25rem);
+                --body-size: clamp(0.65rem, 1vw, 0.85rem);
+            }
+        }
+        @media (max-width: 600px) {
+            :root { --title-size: clamp(1.25rem, 7vw, 2.5rem); }
+            .grid { grid-template-columns: 1fr; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.2s !important;
+            }
+            html { scroll-behavior: auto; }
+        }
+
+        /* ===========================================
+           GEOMETRIC ACCENTS — editorial flair
+           Abstract shapes: circle outlines, lines, dots
+           =========================================== */
+        .geo-accent {
+            position: absolute;
+            pointer-events: none;
+            z-index: 1;
+        }
+        .geo-circle {
+            width: clamp(60px, 12vw, 160px);
+            height: clamp(60px, 12vw, 160px);
+            border-radius: 50%;
+            border: 2px solid var(--rule);
+        }
+        .geo-dot {
+            width: clamp(6px, 1vw, 10px);
+            height: clamp(6px, 1vw, 10px);
+            border-radius: 50%;
+            background: var(--warm);
+            opacity: 0.4;
+        }
+        .geo-line {
+            height: 1px;
+            background: var(--rule);
+        }
+        .geo-vline {
+            width: 1px;
+            background: var(--rule);
+        }
+
+        /* ===========================================
+           HORIZONTAL RULES — editorial dividers
+           =========================================== */
+        .hr-editorial {
+            display: flex;
+            align-items: center;
+            gap: clamp(0.5rem, 1.2vw, 1rem);
+            margin: clamp(0.5rem, 1.2vh, 1rem) 0;
+        }
+        .hr-editorial::before,
+        .hr-editorial::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--rule);
+        }
+        .hr-editorial span {
+            font-family: var(--font-display);
+            font-size: var(--small-size);
+            font-weight: 400;
+            font-style: italic;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+
+        /* ===========================================
+           SECTION MARKER — module indicator
+           =========================================== */
+        .section-marker {
+            display: inline-flex;
+            align-items: center;
+            gap: clamp(0.3rem, 0.7vw, 0.5rem);
+            font-family: var(--font-body);
+            font-size: var(--small-size);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            padding-bottom: clamp(0.3rem, 0.6vh, 0.5rem);
+            border-bottom: 2px solid;
+        }
+
+        /* ===========================================
+           TYPOGRAPHY
+           =========================================== */
+        .display-title {
+            font-family: var(--font-display);
+            font-size: var(--title-size);
+            font-weight: 900;
+            color: var(--charcoal);
+            line-height: 0.95;
+            letter-spacing: -0.02em;
+        }
+        .display-title em {
+            font-weight: 400;
+            font-style: italic;
+        }
+
+        h2 {
+            font-family: var(--font-display);
+            font-size: var(--h2-size);
+            font-weight: 700;
+            color: var(--charcoal);
+            line-height: 1.08;
+            margin-bottom: clamp(0.4rem, 1vh, 0.8rem);
+        }
+        h2 em { font-weight: 400; font-style: italic; }
+
+        .subtitle {
+            font-family: var(--font-body);
+            font-size: clamp(0.78rem, 1.4vw, 1.05rem);
+            color: var(--text-secondary);
+            line-height: 1.55;
+            max-width: 560px;
+        }
+
+        .label {
+            font-family: var(--font-body);
+            font-size: var(--small-size);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            color: var(--text-muted);
+        }
+
+        /* ===========================================
+           PIPELINE TAGS — title slide tech flow
+           =========================================== */
+        .pipeline {
+            display: flex;
+            align-items: center;
+            gap: clamp(0.3rem, 0.7vw, 0.55rem);
+            flex-wrap: wrap;
+            margin-top: clamp(1rem, 2.5vh, 2rem);
+        }
+        .pipe-tag {
+            font-family: var(--font-body);
+            font-size: var(--small-size);
+            font-weight: 600;
+            padding: clamp(0.18rem, 0.4vh, 0.3rem) clamp(0.5rem, 1vw, 0.8rem);
+            border-radius: 3px;
+            border: 1.5px solid;
+        }
+        .pipe-sep {
+            font-family: var(--font-display);
+            font-size: var(--small-size);
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        /* ===========================================
+           MODULE MAP — agenda
+           =========================================== */
+        .mod-list {
+            display: flex;
+            flex-direction: column;
+            gap: clamp(0.12rem, 0.35vh, 0.25rem);
+            counter-reset: modcount;
+        }
+        .mod-entry {
+            display: flex;
+            align-items: baseline;
+            gap: clamp(0.6rem, 1.5vw, 1.2rem);
+            padding: clamp(0.45rem, 1vh, 0.75rem) 0;
+            border-bottom: 1px solid var(--rule);
+        }
+        .mod-entry:last-child { border-bottom: none; }
+        .mod-num {
+            font-family: var(--font-display);
+            font-size: clamp(1rem, 2vw, 1.6rem);
+            font-weight: 900;
+            min-width: clamp(2rem, 3.5vw, 2.8rem);
+            flex-shrink: 0;
+        }
+        .mod-info { flex: 1; }
+        .mod-name {
+            font-family: var(--font-display);
+            font-size: clamp(0.85rem, 1.5vw, 1.15rem);
+            font-weight: 700;
+            color: var(--charcoal);
+        }
+        .mod-desc {
+            font-family: var(--font-body);
+            font-size: var(--small-size);
+            color: var(--text-secondary);
+            margin-top: 0.1em;
+        }
+
+        /* ===========================================
+           PROFILE — about slide
+           =========================================== */
+        .profile {
+            display: flex;
+            flex-direction: column;
+            gap: clamp(0.3rem, 0.7vh, 0.55rem);
+        }
+        .profile-row {
+            display: flex;
+            align-items: baseline;
+            gap: clamp(0.5rem, 1.2vw, 1rem);
+            padding-bottom: clamp(0.28rem, 0.6vh, 0.45rem);
+            border-bottom: 1px solid var(--rule);
+        }
+        .profile-row:last-child { border: none; }
+        .profile-key {
+            font-family: var(--font-mono);
+            font-size: var(--mono-size);
+            font-weight: 600;
+            color: var(--warm);
+            min-width: clamp(7rem, 14vw, 11rem);
+            flex-shrink: 0;
+        }
+        .profile-val {
+            font-family: var(--font-body);
+            font-size: clamp(0.72rem, 1.25vw, 0.95rem);
+            color: var(--charcoal);
+        }
+        .hl {
+            background: var(--warm-dim);
+            color: var(--warm);
+            padding: 0.08em 0.4em;
+            border-radius: 2px;
+            font-weight: 600;
+        }
+        .hl-dark {
+            background: var(--charcoal);
+            color: var(--cream);
+            padding: 0.08em 0.45em;
+            border-radius: 2px;
+            font-weight: 700;
+        }
+        .strike { text-decoration: line-through; opacity: 0.35; }
+
+        /* ===========================================
+           TWO-COLUMN
+           =========================================== */
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: clamp(1rem, 2.5vw, 2rem);
+            flex: 1;
+            min-height: 0;
+            overflow: hidden;
+        }
+        @media (max-width: 700px) {
+            .two-col { grid-template-columns: 1fr; }
+        }
+        .col {
+            display: flex;
+            flex-direction: column;
+            gap: clamp(0.3rem, 0.7vh, 0.55rem);
+            min-height: 0;
+            overflow: hidden;
+        }
+        .col-label {
+            font-family: var(--font-body);
+            font-size: var(--small-size);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        /* ===========================================
+           CODE BLOCKS — warm editorial style
+           =========================================== */
+        .code-block {
+            background: var(--charcoal);
+            border-radius: 4px;
+            overflow: hidden;
+            flex: 1;
+            min-height: 0;
+        }
+        .code-header {
+            display: flex;
+            align-items: center;
+            padding: clamp(0.25rem, 0.45vh, 0.35rem) clamp(0.5rem, 1vw, 0.8rem);
+            background: rgba(255, 255, 255, 0.05);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        .code-label {
+            font-family: var(--font-mono);
+            font-size: clamp(0.48rem, 0.75vw, 0.6rem);
+            color: rgba(255, 255, 255, 0.35);
+            margin-left: auto;
+        }
+        .code-dot {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            margin-right: 4px;
+        }
+        .code-dot:nth-child(1) { background: #e06c60; }
+        .code-dot:nth-child(2) { background: #e5bf56; }
+        .code-dot:nth-child(3) { background: #69c064; }
+        .code-body {
+            padding: clamp(0.4rem, 0.9vh, 0.7rem) clamp(0.6rem, 1.2vw, 1rem);
+            font-family: var(--font-mono);
+            font-size: var(--mono-size);
+            color: #d4d4d4;
+            line-height: 1.65;
+            white-space: pre;
+            overflow: hidden;
+        }
+        /* Syntax */
+        .c  { color: #6a9955; }
+        .k  { color: #569cd6; }
+        .s  { color: #ce9178; }
+        .fn { color: #dcdcaa; }
+        .v  { color: #9cdcfe; }
+        .p  { color: #d4d4d4; }
+        .g  { color: #b5cea8; }
+
+        /* ===========================================
+           TOOL GRID
+           =========================================== */
+        .tool-grid {
+            display: flex;
+            flex-direction: column;
+            gap: clamp(0.3rem, 0.6vh, 0.5rem);
+        }
+        .tool-card {
+            display: flex;
+            align-items: center;
+            gap: clamp(0.5rem, 1.2vw, 1rem);
+            padding: clamp(0.45rem, 0.9vh, 0.7rem) clamp(0.6rem, 1.3vw, 1.1rem);
+            border-radius: 4px;
+            border: 1px solid var(--rule);
+            background: var(--cream-dark);
+            transition: border-color 0.3s ease;
+        }
+        .tool-card:hover { border-color: rgba(0, 0, 0, 0.15); }
+        .tool-icon {
+            font-size: clamp(0.9rem, 1.6vw, 1.2rem);
+            flex-shrink: 0;
+        }
+        .tool-name {
+            font-family: var(--font-mono);
+            font-size: clamp(0.68rem, 1.15vw, 0.88rem);
+            font-weight: 600;
+            color: var(--charcoal);
+            min-width: clamp(5rem, 9vw, 7.5rem);
+            flex-shrink: 0;
+        }
+        .tool-desc {
+            font-family: var(--font-body);
+            font-size: var(--small-size);
+            color: var(--text-secondary);
+            flex: 1;
+        }
+        .tool-badge {
+            font-family: var(--font-display);
+            font-size: clamp(0.5rem, 0.8vw, 0.62rem);
+            font-style: italic;
+            color: var(--text-muted);
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        /* ===========================================
+           CALLOUT
+           =========================================== */
+        .callout {
+            display: flex;
+            align-items: flex-start;
+            gap: clamp(0.35rem, 0.8vw, 0.6rem);
+            padding: clamp(0.38rem, 0.8vh, 0.6rem) clamp(0.5rem, 1.1vw, 0.9rem);
+            border-radius: 4px;
+            border-left: 3px solid;
+            flex-shrink: 0;
+        }
+        .callout-insight {
+            background: var(--dusty-blue-dim);
+            border-color: var(--dusty-blue);
+        }
+        .callout-friction {
+            background: rgba(196, 85, 61, 0.07);
+            border-color: var(--terracotta);
+        }
+        .callout-win {
+            background: var(--sage-dim);
+            border-color: var(--sage);
+        }
+        .callout-icon { flex-shrink: 0; font-size: clamp(0.75rem, 1.2vw, 0.95rem); }
+        .callout-text {
+            font-family: var(--font-body);
+            font-size: var(--small-size);
+            color: var(--ink);
+            line-height: 1.45;
+        }
+        .callout-text code {
+            font-family: var(--font-mono);
+            font-size: 0.88em;
+            background: rgba(0, 0, 0, 0.06);
+            padding: 0.05em 0.35em;
+            border-radius: 2px;
+        }
+
+        /* ===========================================
+           BULLETS
+           =========================================== */
+        .bullets {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: clamp(0.25rem, 0.55vh, 0.42rem);
+        }
+        .bullets li {
+            font-family: var(--font-body);
+            font-size: clamp(0.72rem, 1.2vw, 0.9rem);
+            color: var(--charcoal);
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            line-height: 1.4;
+        }
+        .bullets li::before {
+            content: '—';
+            color: var(--warm);
+            flex-shrink: 0;
+            font-weight: 700;
+        }
+
+        /* ===========================================
+           OS BADGES
+           =========================================== */
+        .os-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3em;
+            font-family: var(--font-body);
+            font-size: var(--small-size);
+            font-weight: 700;
+            padding: 0.2em 0.7em;
+            border-radius: 3px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        /* ===========================================
+           REVEAL ANIMATIONS — editorial: staggered text
+           =========================================== */
+        .reveal {
+            opacity: 0;
+            transform: translateY(16px);
+            transition: opacity var(--duration) var(--ease),
+                        transform var(--duration) var(--ease);
+        }
+        .slide.visible .reveal {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .slide.visible .reveal:nth-child(1) { transition-delay: 0.06s; }
+        .slide.visible .reveal:nth-child(2) { transition-delay: 0.14s; }
+        .slide.visible .reveal:nth-child(3) { transition-delay: 0.22s; }
+        .slide.visible .reveal:nth-child(4) { transition-delay: 0.30s; }
+        .slide.visible .reveal:nth-child(5) { transition-delay: 0.38s; }
+        .slide.visible .reveal:nth-child(6) { transition-delay: 0.46s; }
+
+        /* ===========================================
+           INLINE EDITING — opt-in browser editing
+           Toggle via hover hotzone top-left or press E
+           =========================================== */
+        .edit-hotzone {
+            position: fixed;
+            top: 0; left: 0;
+            width: 80px; height: 80px;
+            z-index: 10000;
+            cursor: pointer;
+        }
+        .edit-toggle {
+            position: fixed;
+            top: clamp(0.5rem, 1.2vh, 1rem);
+            left: clamp(0.5rem, 1.2vw, 1rem);
+            font-size: clamp(0.9rem, 1.5vw, 1.2rem);
+            background: var(--charcoal);
+            color: var(--cream);
+            border: none;
+            border-radius: 4px;
+            padding: 0.35em 0.55em;
+            cursor: pointer;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 10001;
+            font-family: var(--font-body);
+        }
+        .edit-toggle.show,
+        .edit-toggle.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .edit-toggle.active {
+            background: var(--warm);
+        }
+
+        /* Editing mode indicator */
+        .editing-banner {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: var(--warm);
+            z-index: 9999;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+        body.edit-mode .editing-banner { opacity: 1; }
+
+        /* Editable element hover hint */
+        body.edit-mode [contenteditable="true"]:hover {
+            outline: 2px dashed rgba(198, 93, 42, 0.3);
+            outline-offset: 4px;
+            border-radius: 2px;
+        }
+        body.edit-mode [contenteditable="true"]:focus {
+            outline: 2px solid var(--warm);
+            outline-offset: 4px;
+            border-radius: 2px;
+        }
+
+        /* Save toast */
+        .save-toast {
+            position: fixed;
+            bottom: clamp(1rem, 2.5vh, 2rem);
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: var(--charcoal);
+            color: var(--cream);
+            font-family: var(--font-body);
+            font-size: var(--small-size);
+            padding: 0.5em 1.2em;
+            border-radius: 4px;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s var(--ease);
+            z-index: 10002;
+        }
+        .save-toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* ===========================================
+           PROGRESS BAR
+           =========================================== */
+        .progress-bar {
+            position: fixed;
+            bottom: 0; left: 0;
+            height: 2px;
+            background: var(--warm);
+            z-index: 200;
+            transition: width 0.35s ease;
+            width: 0%;
+        }
+
+        /* ===========================================
+           NAV DOTS
+           =========================================== */
+        .nav-dots {
+            position: fixed;
+            right: clamp(0.6rem, 1.4vw, 1.2rem);
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 200;
+        }
+        .nav-dot {
+            width: clamp(5px, 0.6vw, 7px);
+            height: clamp(5px, 0.6vw, 7px);
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.12);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .nav-dot:hover { background: rgba(0, 0, 0, 0.25); }
+        .nav-dot.active {
+            background: var(--warm);
+            transform: scale(1.6);
+        }
+
+        /* ===========================================
+           SLIDE NUMBER + HINT
+           =========================================== */
+        .slide-num {
+            position: absolute;
+            bottom: clamp(0.6rem, 1.5vh, 1.2rem);
+            right: clamp(1rem, 2.5vw, 2rem);
+            font-family: var(--font-mono);
+            font-size: clamp(0.48rem, 0.75vw, 0.6rem);
+            color: var(--text-muted);
+            z-index: 3;
+        }
+        .keyboard-hint {
+            position: fixed;
+            bottom: clamp(0.5rem, 1.2vh, 0.9rem);
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: var(--font-mono);
+            font-size: clamp(0.42rem, 0.65vw, 0.52rem);
+            color: var(--text-muted);
+            opacity: 0.5;
+            z-index: 200;
+        }
+        @media (max-height: 600px) {
+            .nav-dots, .keyboard-hint, .slide-num { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- === EDITING UI === -->
+<div class="edit-hotzone"></div>
+<button class="edit-toggle" id="editToggle" title="Edit mode (E)">✏️ Edit</button>
+<div class="editing-banner"></div>
+<div class="save-toast" id="saveToast">Saved to localStorage ✓</div>
+
+<!-- === PROGRESS BAR === -->
+<div class="progress-bar" id="progressBar"></div>
+
+<!-- === NAVIGATION DOTS === -->
+<nav class="nav-dots" id="navDots"></nav>
+
+<!-- === KEYBOARD HINT === -->
+<span class="keyboard-hint">↑ ↓ navegar · E editar · Ctrl+S guardar</span>
+
+<!-- ─────────────────────────────────────────────────
+     SLIDE 1 · PORTADA
+     ───────────────────────────────────────────────── -->
+<section class="slide" id="slide-0">
+    <!-- Geometric accents -->
+    <div class="geo-accent geo-circle" style="top:8%;right:12%;"></div>
+    <div class="geo-accent geo-dot" style="top:15%;right:10%;"></div>
+    <div class="geo-accent geo-line" style="bottom:25%;left:8%;width:clamp(40px,8vw,100px);"></div>
+
+    <div class="slide-content" style="max-width:min(90vw,900px);margin:0 auto;">
+        <div class="reveal label" style="margin-bottom:clamp(0.5rem,1.5vh,1.2rem);">Clase práctica · Datos &amp; IA</div>
+        <h1 class="display-title reveal">Agentic<br><em>Modern Data</em></h1>
+        <p class="subtitle reveal" style="margin-top:clamp(0.5rem,1.2vh,1rem);">De psql a un agente con dashboard.<br>En una sola clase.</p>
+        <div class="pipeline reveal">
+            <span class="pipe-tag" style="color:var(--mod0);border-color:var(--mod0);">psql</span>
+            <span class="pipe-sep">→</span>
+            <span class="pipe-tag" style="color:var(--mod1);border-color:var(--mod1);">polars</span>
+            <span class="pipe-sep">→</span>
+            <span class="pipe-tag" style="color:var(--mod2);border-color:var(--mod2);">duckdb</span>
+            <span class="pipe-sep">→</span>
+            <span class="pipe-tag" style="color:var(--mod3);border-color:var(--mod3);">databricks</span>
+            <span class="pipe-sep">→</span>
+            <span class="pipe-tag" style="color:var(--mod4);border-color:var(--mod4);">agente IA</span>
+        </div>
+    </div>
+    <span class="slide-num">01 / 10</span>
+</section>
+
+<!-- ─────────────────────────────────────────────────
+     SLIDE 2 · ¿QUIÉN ES ESTE DUDE?
+     ───────────────────────────────────────────────── -->
+<section class="slide" id="slide-1">
+    <div class="geo-accent geo-circle" style="bottom:10%;left:8%;opacity:0.5;"></div>
+
+    <div class="slide-content" style="max-width:min(90vw,850px);margin:0 auto;">
+        <div class="reveal label" style="margin-bottom:clamp(0.2rem,0.5vh,0.4rem);font-family:var(--font-mono);">&gt; who-is-this-dude?</div>
+        <h2 class="reveal">Hola, soy <em>Haro</em></h2>
+        <div class="hr-editorial reveal"><span>perfil</span></div>
+        <div class="profile reveal">
+            <div class="profile-row">
+                <span class="profile-key">now</span>
+                <span class="profile-val">AI Engineer · <span class="hl">Banco Santander Group</span></span>
+            </div>
+            <div class="profile-row">
+                <span class="profile-key">before</span>
+                <span class="profile-val">Data Engineer / Science consultant · 7 años</span>
+            </div>
+            <div class="profile-row">
+                <span class="profile-key">not_on_linkedin</span>
+                <span class="profile-val" style="color:var(--text-secondary);font-style:italic;">no tengo linkedin <span style="opacity:0.5;">(hasta ahora)</span></span>
+            </div>
+            <div class="profile-row">
+                <span class="profile-key">i_love_x</span>
+                <span class="profile-val"><span class="hl-dark">@h1sort</span></span>
+            </div>
+            <div class="profile-row">
+                <span class="profile-key">pets</span>
+                <span class="profile-val"><span style="color:var(--warm);font-weight:600;">perros 🐕</span> &nbsp;›››&nbsp; <span class="strike">gatos 🐈</span></span>
+            </div>
+            <div class="profile-row">
+                <span class="profile-key">hot_take</span>
+                <span class="profile-val"><span style="color:var(--warm);font-weight:600;">🍍 la piña no va en la pizza.</span> Es innegociable.</span>
+            </div>
+        </div>
+    </div>
+    <span class="slide-num">02 / 10</span>
+</section>
+
+<!-- ─────────────────────────────────────────────────
+     SLIDE 3 · EL MAPA
+     ───────────────────────────────────────────────── -->
+<section class="slide" id="slide-2">
+    <div class="geo-accent geo-dot" style="top:20%;right:15%;"></div>
+    <div class="geo-accent geo-vline" style="right:18%;top:22%;height:clamp(30px,6vh,60px);"></div>
+
+    <div class="slide-content" style="max-width:min(90vw,850px);margin:0 auto;">
+        <div class="reveal label" style="margin-bottom:clamp(0.2rem,0.5vh,0.4rem);">agenda</div>
+        <h2 class="reveal">Lo que vamos a <em>construir</em></h2>
+        <div class="hr-editorial reveal"><span>módulos</span></div>
+        <div class="mod-list reveal">
+            <div class="mod-entry">
+                <span class="mod-num" style="color:var(--mod0);">00</span>
+                <div class="mod-info">
+                    <div class="mod-name">Setup</div>
+                    <div class="mod-desc">Entorno listo — uv, psql, databricks CLI, opencode</div>
+                </div>
+            </div>
+            <div class="mod-entry">
+                <span class="mod-num" style="color:var(--mod1);">01</span>
+                <div class="mod-info">
+                    <div class="mod-name">Raw SQL</div>
+                    <div class="mod-desc">Explorar datos en Postgres con psql y Python</div>
+                </div>
+            </div>
+            <div class="mod-entry">
+                <span class="mod-num" style="color:var(--mod2);">02</span>
+                <div class="mod-info">
+                    <div class="mod-name">Polars &amp; DuckDB</div>
+                    <div class="mod-desc">CSV → Polars → DuckDB (con attach directo a Postgres)</div>
+                </div>
+            </div>
+            <div class="mod-entry">
+                <span class="mod-num" style="color:var(--mod3);">03</span>
+                <div class="mod-info">
+                    <div class="mod-name">Databricks</div>
+                    <div class="mod-desc">Subir a Delta Lake → construir Genie space</div>
+                </div>
+            </div>
+            <div class="mod-entry">
+                <span class="mod-num" style="color:var(--mod4);">04</span>
+                <div class="mod-info">
+                    <div class="mod-name">Agente IA</div>
+                    <div class="mod-desc">MCP server → opencode → dashboard HTML con IA</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <span class="slide-num">03 / 10</span>
+</section>
+
+<!-- ─────────────────────────────────────────────────
+     SLIDE 4 · SETUP — HERRAMIENTAS
+     ───────────────────────────────────────────────── -->
+<section class="slide" id="slide-3">
+    <div class="slide-content" style="max-width:min(90vw,950px);margin:0 auto;">
+        <div class="section-marker reveal" style="color:var(--mod0);border-color:var(--mod0);">00 Setup</div>
+        <h2 class="reveal" style="margin-top:clamp(0.5rem,1.2vh,0.9rem);">Módulo 00 — <em>Setup</em></h2>
+        <p class="subtitle reveal">Instalar antes de clase. Mínimo indispensable, sin drama.</p>
+        <div class="tool-grid reveal" style="margin-top:clamp(0.4rem,0.9vh,0.7rem);">
+            <div class="tool-card">
+                <span class="tool-icon">⚡</span>
+                <span class="tool-name">uv</span>
+                <span class="tool-desc">Gestor de Python + dependencias. Reemplaza pip, pyenv y virtualenv.</span>
+                <span class="tool-badge">pip de 2025</span>
+            </div>
+            <div class="tool-card">
+                <span class="tool-icon">🐘</span>
+                <span class="tool-name">libpq / psql</span>
+                <span class="tool-desc">Cliente de Postgres desde terminal. Conectar y explorar directamente.</span>
+                <span class="tool-badge">cliente SQL</span>
+            </div>
+            <div class="tool-card">
+                <span class="tool-icon">🧱</span>
+                <span class="tool-name">databricks CLI</span>
+                <span class="tool-desc">Accede al catálogo Unity, descarga tablas, gestiona warehouses.</span>
+                <span class="tool-badge">lakehouse</span>
+            </div>
+            <div class="tool-card">
+                <span class="tool-icon">🤖</span>
+                <span class="tool-name">opencode</span>
+                <span class="tool-desc">Agente de IA en terminal. Lo usamos en el módulo final.</span>
+                <span class="tool-badge">el agente</span>
+            </div>
+        </div>
+        <div class="callout callout-insight reveal" style="margin-top:clamp(0.4rem,0.8vh,0.6rem);">
+            <span class="callout-icon">💡</span>
+            <span class="callout-text">Todas las dependencias Python (<code>polars</code>, <code>duckdb</code>, <code>psycopg2</code>, <code>python-dotenv</code>) se instalan con <strong>uv</strong> — sin conflictos de versiones.</span>
+        </div>
+    </div>
+    <span class="slide-num">04 / 10</span>
+</section>
+
+<!-- ─────────────────────────────────────────────────
+     SLIDE 5 · SETUP — COMANDOS MAC + WINDOWS
+     ───────────────────────────────────────────────── -->
+<section class="slide" id="slide-4">
+    <div class="slide-content" style="max-width:min(90vw,1050px);margin:0 auto;">
+        <div class="section-marker reveal" style="color:var(--mod0);border-color:var(--mod0);">00 Setup</div>
+        <h2 class="reveal" style="margin-top:clamp(0.5rem,1.2vh,0.9rem);">Setup — <em>instalación</em></h2>
+        <div class="two-col reveal" style="margin-top:clamp(0.3rem,0.7vh,0.5rem);flex:1;min-height:0;">
+            <div class="col">
+                <span class="os-badge" style="background:var(--dusty-blue-dim);color:var(--dusty-blue);">🍎 macOS</span>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span>
+                        <span class="code-label">zsh</span>
+                    </div>
+                    <div class="code-body"><span class="c"># Homebrew (si no lo tienes)</span>
+/bin/bash -c "$(curl -fsSL \
+  https://brew.sh/install.sh)"
+
+<span class="c"># Herramientas</span>
+<span class="k">brew</span> install uv
+<span class="k">brew</span> install libpq
+<span class="k">echo</span> <span class="s">'export PATH="...libpq/bin:$PATH"'</span> >> ~/.zshrc
+<span class="k">brew</span> install databricks
+
+<span class="c"># opencode</span>
+<span class="k">curl</span> -fsSL opencode.ai/install | sh
+
+<span class="c"># Verificar</span>
+<span class="k">uv</span> --version && <span class="k">psql</span> --version</div>
+                </div>
+            </div>
+            <div class="col">
+                <span class="os-badge" style="background:var(--plum-dim);color:var(--plum);">🪟 Windows · PowerShell</span>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span>
+                        <span class="code-label">powershell</span>
+                    </div>
+                    <div class="code-body"><span class="c"># winget (viene con Windows 11)</span>
+<span class="k">winget</span> install astral-sh.uv
+<span class="k">winget</span> install Databricks.DatabricksCLI
+
+<span class="c"># psql: descargar desde postgresql.org</span>
+<span class="c"># Installer → solo "Command Line Tools"</span>
+<span class="c"># Añadir bin al PATH del sistema</span>
+
+<span class="c"># opencode</span>
+<span class="k">iwr</span> opencode.ai/install.ps1 | <span class="k">iex</span>
+
+<span class="c"># Verificar (nueva terminal)</span>
+<span class="k">uv</span> --version
+<span class="k">psql</span> --version
+<span class="k">databricks</span> --version</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <span class="slide-num">05 / 10</span>
+</section>
+
+<!-- ─────────────────────────────────────────────────
+     SLIDE 6 · MÓDULO 01 — RAW SQL
+     ───────────────────────────────────────────────── -->
+<section class="slide" id="slide-5">
+    <div class="slide-content" style="max-width:min(90vw,1050px);margin:0 auto;">
+        <div class="section-marker reveal" style="color:var(--mod1);border-color:var(--mod1);">01 SQL</div>
+        <h2 class="reveal" style="margin-top:clamp(0.5rem,1.2vh,0.9rem);">Módulo 01 — <em>Raw SQL</em></h2>
+        <p class="subtitle reveal">Conectar a Postgres (Neon) y explorar el dataset de panaderías.</p>
+        <div class="two-col reveal" style="margin-top:clamp(0.3rem,0.6vh,0.45rem);flex:1;min-height:0;">
+            <div class="col">
+                <span class="col-label" style="color:var(--mod1);">Conectar con psql</span>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span>
+                        <span class="code-label">psql</span>
+                    </div>
+                    <div class="code-body"><span class="c"># Conexión de solo lectura</span>
+<span class="k">psql</span> <span class="s">"postgresql://alumni_reader:\
+BakehouseClass2024@ep-snowy-\
+forest-adlwtnc0.us-east-1\
+.aws.neon.tech/neondb\
+?sslmode=require"</span>
+
+<span class="c"># Comandos útiles en psql</span>
+<span class="v">\dt</span>                 <span class="c"># listar tablas</span>
+<span class="v">\d</span> sales_transactions <span class="c"># describir</span>
+<span class="v">\q</span>                 <span class="c"># salir</span></div>
+                </div>
+            </div>
+            <div class="col">
+                <span class="col-label" style="color:var(--mod1);">Dataset · Bakehouse</span>
+                <ul class="bullets" style="margin-bottom:clamp(0.3rem,0.7vh,0.5rem);">
+                    <li>sales_transactions — 3,333 filas</li>
+                    <li>sales_customers — 300 filas</li>
+                    <li>sales_franchises — 48 franquicias</li>
+                    <li>sales_suppliers — 27 proveedores</li>
+                    <li>media_customer_reviews — 204 reseñas</li>
+                    <li>media_gold_reviews_chunked — 196 chunks</li>
+                </ul>
+                <div class="callout callout-friction">
+                    <span class="callout-icon">🤔</span>
+                    <span class="callout-text">psql es potente pero no puedo guardar resultados ni visualizar fácilmente. Necesito Python.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <span class="slide-num">06 / 10</span>
+</section>
+
+<!-- ─────────────────────────────────────────────────
+     SLIDE 7 · MÓDULO 02 — POLARS + DUCKDB
+     ───────────────────────────────────────────────── -->
+<section class="slide" id="slide-6">
+    <div class="slide-content" style="max-width:min(90vw,1050px);margin:0 auto;">
+        <div class="section-marker reveal" style="color:var(--mod2);border-color:var(--mod2);">02 Datos</div>
+        <h2 class="reveal" style="margin-top:clamp(0.5rem,1.2vh,0.9rem);">Módulo 02 — <em>Polars &amp; DuckDB</em></h2>
+        <div class="two-col reveal" style="margin-top:clamp(0.3rem,0.6vh,0.45rem);flex:1;min-height:0;">
+            <div class="col">
+                <span class="col-label" style="color:var(--mod2);">Polars — transformación Python-nativa</span>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span>
+                        <span class="code-label">polars_demo.py</span>
+                    </div>
+                    <div class="code-body"><span class="k">import</span> polars <span class="k">as</span> pl
+
+df = pl.read_csv(<span class="s">"sales_transactions.csv"</span>)
+
+<span class="c"># Lazy evaluation — eficiente</span>
+df.lazy()
+  .filter(pl.col(<span class="s">"totalPrice"</span>) > <span class="g">20</span>)
+  .group_by(<span class="s">"franchiseID"</span>)
+  .agg(pl.col(<span class="s">"totalPrice"</span>).sum())
+  .sort(<span class="s">"totalPrice"</span>, descending=<span class="g">True</span>)
+  .collect()</div>
+                </div>
+                <div class="callout callout-friction" style="margin-top:clamp(0.15rem,0.35vh,0.25rem);">
+                    <span class="callout-icon">🤔</span>
+                    <span class="callout-text">Escribo mucho Python para lo que SQL hace en una línea...</span>
+                </div>
+            </div>
+            <div class="col">
+                <span class="col-label" style="color:var(--dusty-blue);">DuckDB — SQL sobre cualquier cosa</span>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span>
+                        <span class="code-label">duckdb_demo.py</span>
+                    </div>
+                    <div class="code-body"><span class="k">import</span> duckdb
+
+<span class="c"># SQL directo sobre CSV (sin cargar)</span>
+duckdb.sql(<span class="s">"""
+  SELECT franchiseID,
+    SUM(totalPrice) AS revenue
+  FROM 'sales_transactions.csv'
+  GROUP BY 1 ORDER BY 2 DESC
+"""</span>)
+
+<span class="c"># 🤯 Attach directo a Postgres</span>
+duckdb.sql(<span class="s">"""
+  ATTACH 'postgresql://...'
+  AS neon (TYPE postgres)
+"""</span>)</div>
+                </div>
+                <div class="callout callout-win" style="margin-top:clamp(0.15rem,0.35vh,0.25rem);">
+                    <span class="callout-icon">🤩</span>
+                    <span class="callout-text">Sin ETL. DuckDB consulta Postgres directamente desde Python.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <span class="slide-num">07 / 10</span>
+</section>
+
+<!-- ─────────────────────────────────────────────────
+     SLIDE 8 · MÓDULO 03 — DATABRICKS + GENIE
+     ───────────────────────────────────────────────── -->
+<section class="slide" id="slide-7">
+    <div class="geo-accent geo-circle" style="top:12%;right:8%;width:clamp(40px,8vw,100px);height:clamp(40px,8vw,100px);border-color:var(--gold);opacity:0.2;"></div>
+
+    <div class="slide-content" style="max-width:min(90vw,1050px);margin:0 auto;">
+        <div class="section-marker reveal" style="color:var(--mod3);border-color:var(--mod3);">03 Databricks</div>
+        <h2 class="reveal" style="margin-top:clamp(0.5rem,1.2vh,0.9rem);">Módulo 03 — <em>Databricks</em></h2>
+        <p class="subtitle reveal">Subir datos a Delta Lake y construir un Genie space (lenguaje natural → SQL).</p>
+        <div class="two-col reveal" style="margin-top:clamp(0.3rem,0.6vh,0.45rem);flex:1;min-height:0;">
+            <div class="col">
+                <span class="col-label" style="color:var(--mod3);">CLI + catálogo</span>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span>
+                        <span class="code-label">terminal</span>
+                    </div>
+                    <div class="code-body"><span class="c"># Configurar acceso</span>
+<span class="k">databricks</span> configure
+
+<span class="c"># Ver catálogos y tablas</span>
+<span class="k">databricks</span> catalogs list
+<span class="k">databricks</span> schemas list samples
+<span class="k">databricks</span> tables list samples bakehouse
+
+<span class="c"># Descargar tabla como CSV</span>
+<span class="k">databricks</span> api post \
+  /api/2.0/sql/statements \
+  --json <span class="s">'{"statement":"SELECT *
+  FROM samples.bakehouse
+  .sales_customers",
+  "warehouse_id":"..."}'</span></div>
+                </div>
+            </div>
+            <div class="col">
+                <span class="col-label" style="color:var(--mod3);">Genie space</span>
+                <ul class="bullets" style="margin-bottom:clamp(0.3rem,0.7vh,0.5rem);">
+                    <li>Seleccionar tablas del catálogo Unity</li>
+                    <li>Crear un Genie space desde la UI</li>
+                    <li>Añadir contexto de negocio</li>
+                    <li>Preguntar en lenguaje natural</li>
+                </ul>
+                <div class="callout callout-win">
+                    <span class="callout-icon">🤩</span>
+                    <span class="callout-text">"¿Cuál fue la franquicia con más ventas en junio?" — Genie genera el SQL solo.</span>
+                </div>
+                <div class="callout callout-friction" style="margin-top:clamp(0.15rem,0.35vh,0.25rem);">
+                    <span class="callout-icon">🤔</span>
+                    <span class="callout-text">Genie está atrapado en la UI. ¿Cómo lo integro en mi app?</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <span class="slide-num">08 / 10</span>
+</section>
+
+<!-- ─────────────────────────────────────────────────
+     SLIDE 9 · MÓDULO 04 — MCP + AGENTE
+     ───────────────────────────────────────────────── -->
+<section class="slide" id="slide-8">
+    <div class="slide-content" style="max-width:min(90vw,1050px);margin:0 auto;">
+        <div class="section-marker reveal" style="color:var(--mod4);border-color:var(--mod4);">04 Agente</div>
+        <h2 class="reveal" style="margin-top:clamp(0.5rem,1.2vh,0.9rem);">Módulo 04 — <em>MCP + Agente</em></h2>
+        <p class="subtitle reveal">Conectar opencode al Genie space vía MCP y generar un dashboard con IA.</p>
+        <div class="two-col reveal" style="margin-top:clamp(0.3rem,0.6vh,0.45rem);flex:1;min-height:0;">
+            <div class="col">
+                <span class="col-label" style="color:var(--mod4);">Configurar MCP en opencode</span>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span>
+                        <span class="code-label">config.json</span>
+                    </div>
+                    <div class="code-body"><span class="p">{</span>
+  <span class="s">"mcp"</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s">"databricks"</span><span class="p">:</span> <span class="p">{</span>
+      <span class="s">"command"</span><span class="p">:</span> <span class="s">"databricks"</span><span class="p">,</span>
+      <span class="s">"args"</span><span class="p">:</span> <span class="p">[</span><span class="s">"genie"</span><span class="p">,</span> <span class="s">"mcp"</span><span class="p">]</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c"># Lanzar el agente</span>
+<span class="k">opencode</span></div>
+                </div>
+            </div>
+            <div class="col">
+                <span class="col-label" style="color:var(--mod4);">Prompt de ejemplo al agente</span>
+                <div class="code-block">
+                    <div class="code-header" style="background:rgba(90,122,94,0.1);border-color:rgba(90,122,94,0.15);">
+                        <span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span>
+                        <span class="code-label">prompt</span>
+                    </div>
+                    <div class="code-body" style="color:#a8c99b;font-style:italic;">Usa el Genie space de Databricks
+para analizar las ventas de
+Bakehouse y genera un dashboard
+HTML con:
+
+- Top 5 franquicias por revenue
+- Evolución mensual de ventas
+- Promedio de reseñas por ciudad
+- Método de pago más usado
+
+Guárdalo en dashboard.html</div>
+                </div>
+                <div class="callout callout-win" style="margin-top:clamp(0.15rem,0.35vh,0.25rem);">
+                    <span class="callout-icon">🚀</span>
+                    <span class="callout-text">El agente consulta Genie, procesa los datos y escribe HTML. Así es el trabajo agentic.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <span class="slide-num">09 / 10</span>
+</section>
+
+<!-- ─────────────────────────────────────────────────
+     SLIDE 10 · CIERRE
+     ───────────────────────────────────────────────── -->
+<section class="slide" id="slide-9">
+    <div class="geo-accent geo-circle" style="top:15%;left:10%;width:clamp(80px,15vw,200px);height:clamp(80px,15vw,200px);border-color:rgba(0,0,0,0.05);"></div>
+    <div class="geo-accent geo-dot" style="bottom:20%;right:15%;"></div>
+    <div class="geo-accent geo-line" style="top:35%;right:10%;width:clamp(50px,10vw,120px);"></div>
+
+    <div class="slide-content" style="align-items:center;text-align:center;justify-content:center;max-width:min(90vw,750px);margin:0 auto;">
+        <div class="reveal label" style="margin-bottom:clamp(0.5rem,1.5vh,1.2rem);">¿Listos?</div>
+        <h2 class="reveal" style="font-size:clamp(2.5rem,7.5vw,6rem);text-align:center;">¡A <em>trabajar!</em></h2>
+        <p class="subtitle reveal" style="max-width:480px;text-align:center;margin:clamp(0.5rem,1.2vh,1rem) auto 0;">Cualquier duda, pregunta. El objetivo es que esto les sea útil en sus proyectos reales.</p>
+        <div class="hr-editorial reveal" style="width:min(300px,60vw);margin:clamp(1rem,2.5vh,2rem) auto;"><span>fin</span></div>
+        <div class="reveal" style="display:flex;gap:clamp(0.8rem,2vw,1.8rem);justify-content:center;flex-wrap:wrap;align-items:center;">
+            <span style="font-family:var(--font-mono);font-size:var(--small-size);color:var(--text-secondary);">X: <strong style="color:var(--charcoal);">@h1sort</strong></span>
+            <span style="color:var(--text-muted);opacity:0.3;font-size:1rem;">·</span>
+            <span style="font-family:var(--font-body);font-size:var(--small-size);color:var(--text-secondary);">🐕 ››› 🐈</span>
+            <span style="color:var(--text-muted);opacity:0.3;font-size:1rem;">·</span>
+            <span style="font-family:var(--font-body);font-size:var(--small-size);color:var(--text-secondary);">🍍 ≠ 🍕</span>
+        </div>
+    </div>
+    <span class="slide-num">10 / 10</span>
+</section>
+
+<script>
+    /* ===========================================
+       SLIDE PRESENTATION CONTROLLER
+       =========================================== */
+    class SlidePresentation {
+        constructor() {
+            this.slides = Array.from(document.querySelectorAll('.slide'));
+            this.total = this.slides.length;
+            this.current = 0;
+
+            this.progressBar = document.getElementById('progressBar');
+            this.navDotsContainer = document.getElementById('navDots');
+
+            this.buildNavDots();
+            this.setupIntersectionObserver();
+            this.setupKeyboard();
+            this.setupWheel();
+            this.setupTouch();
+        }
+
+        buildNavDots() {
+            this.slides.forEach((_, i) => {
+                const dot = document.createElement('div');
+                dot.className = 'nav-dot' + (i === 0 ? ' active' : '');
+                dot.addEventListener('click', () => this.goTo(i));
+                this.navDotsContainer.appendChild(dot);
+            });
+        }
+
+        setupIntersectionObserver() {
+            const obs = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        this.current = this.slides.indexOf(entry.target);
+                        this.updateUI();
+                    }
+                });
+            }, { threshold: 0.55 });
+            this.slides.forEach(s => obs.observe(s));
+        }
+
+        updateUI() {
+            const pct = this.total > 1 ? (this.current / (this.total - 1)) * 100 : 0;
+            this.progressBar.style.width = pct + '%';
+            document.querySelectorAll('.nav-dot').forEach((d, i) => {
+                d.classList.toggle('active', i === this.current);
+            });
+        }
+
+        goTo(index) {
+            const idx = Math.max(0, Math.min(this.total - 1, index));
+            this.slides[idx].scrollIntoView({ behavior: 'smooth' });
+        }
+
+        setupKeyboard() {
+            document.addEventListener('keydown', e => {
+                /* Skip navigation keys when in edit mode on a contenteditable */
+                if (e.target.getAttribute('contenteditable')) return;
+
+                if (['ArrowDown','ArrowRight','Space','PageDown'].includes(e.code)) {
+                    e.preventDefault();
+                    this.goTo(this.current + 1);
+                } else if (['ArrowUp','ArrowLeft','PageUp'].includes(e.code)) {
+                    e.preventDefault();
+                    this.goTo(this.current - 1);
+                } else if (e.code === 'Home') {
+                    e.preventDefault();
+                    this.goTo(0);
+                } else if (e.code === 'End') {
+                    e.preventDefault();
+                    this.goTo(this.total - 1);
+                }
+            });
+        }
+
+        setupWheel() {
+            let lastWheel = 0;
+            document.addEventListener('wheel', e => {
+                e.preventDefault();
+                const now = Date.now();
+                if (now - lastWheel < 700) return;
+                lastWheel = now;
+                if (e.deltaY > 0) this.goTo(this.current + 1);
+                else this.goTo(this.current - 1);
+            }, { passive: false });
+        }
+
+        setupTouch() {
+            let startY = 0;
+            document.addEventListener('touchstart', e => {
+                startY = e.touches[0].clientY;
+            }, { passive: true });
+            document.addEventListener('touchend', e => {
+                const diff = startY - e.changedTouches[0].clientY;
+                if (Math.abs(diff) > 50) {
+                    if (diff > 0) this.goTo(this.current + 1);
+                    else this.goTo(this.current - 1);
+                }
+            }, { passive: true });
+        }
+    }
+
+    /* ===========================================
+       INLINE EDITOR
+       Toggle with hotzone hover, click, or E key
+       Auto-saves to localStorage, Ctrl+S to save
+       =========================================== */
+    class InlineEditor {
+        constructor() {
+            this.isActive = false;
+            this.storageKey = 'slides-edit-' + location.pathname;
+            this.editableSelectors = [
+                '.display-title', '.display-title em',
+                'h2', 'h2 em',
+                '.subtitle', '.label',
+                '.profile-val', '.mod-name', '.mod-desc',
+                '.tool-desc', '.tool-badge',
+                '.callout-text',
+                '.bullets li',
+                '.pipe-tag',
+                '.slide-num'
+            ];
+
+            this.setupHotzone();
+            this.setupKeyboardShortcuts();
+            this.restoreEdits();
+        }
+
+        setupHotzone() {
+            const hotzone = document.querySelector('.edit-hotzone');
+            const editToggle = document.getElementById('editToggle');
+            let hideTimeout = null;
+
+            /* Hotzone hover → show button */
+            hotzone.addEventListener('mouseenter', () => {
+                clearTimeout(hideTimeout);
+                editToggle.classList.add('show');
+            });
+            hotzone.addEventListener('mouseleave', () => {
+                hideTimeout = setTimeout(() => {
+                    if (!this.isActive) editToggle.classList.remove('show');
+                }, 400);
+            });
+
+            /* Button hover → keep visible */
+            editToggle.addEventListener('mouseenter', () => {
+                clearTimeout(hideTimeout);
+            });
+            editToggle.addEventListener('mouseleave', () => {
+                hideTimeout = setTimeout(() => {
+                    if (!this.isActive) editToggle.classList.remove('show');
+                }, 400);
+            });
+
+            /* Click toggle */
+            editToggle.addEventListener('click', () => this.toggleEditMode());
+            hotzone.addEventListener('click', () => this.toggleEditMode());
+        }
+
+        setupKeyboardShortcuts() {
+            document.addEventListener('keydown', (e) => {
+                /* E key toggles edit mode (not when typing in editable) */
+                if ((e.key === 'e' || e.key === 'E') && !e.target.getAttribute('contenteditable')) {
+                    this.toggleEditMode();
+                }
+                /* Ctrl+S / Cmd+S to save */
+                if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                    e.preventDefault();
+                    this.saveEdits();
+                    this.showToast();
+                }
+            });
+        }
+
+        toggleEditMode() {
+            this.isActive = !this.isActive;
+            const toggle = document.getElementById('editToggle');
+
+            if (this.isActive) {
+                document.body.classList.add('edit-mode');
+                toggle.classList.add('active');
+                toggle.textContent = '✏️ Editing';
+                this.enableEditing();
+            } else {
+                document.body.classList.remove('edit-mode');
+                toggle.classList.remove('active');
+                toggle.textContent = '✏️ Edit';
+                this.disableEditing();
+                this.saveEdits();
+                this.showToast();
+            }
+        }
+
+        enableEditing() {
+            this.editableSelectors.forEach(sel => {
+                document.querySelectorAll(sel).forEach(el => {
+                    /* Skip elements that contain child editables */
+                    if (el.querySelector('[contenteditable]')) return;
+                    el.setAttribute('contenteditable', 'true');
+                });
+            });
+        }
+
+        disableEditing() {
+            document.querySelectorAll('[contenteditable="true"]').forEach(el => {
+                el.removeAttribute('contenteditable');
+            });
+        }
+
+        saveEdits() {
+            const data = {};
+            document.querySelectorAll('.slide').forEach((slide, i) => {
+                data['slide-' + i] = slide.innerHTML;
+            });
+            try {
+                localStorage.setItem(this.storageKey, JSON.stringify(data));
+            } catch (e) {
+                /* localStorage full or unavailable — silently skip */
+            }
+        }
+
+        restoreEdits() {
+            try {
+                const raw = localStorage.getItem(this.storageKey);
+                if (!raw) return;
+                const data = JSON.parse(raw);
+                document.querySelectorAll('.slide').forEach((slide, i) => {
+                    const saved = data['slide-' + i];
+                    if (saved) slide.innerHTML = saved;
+                });
+            } catch (e) {
+                /* Corrupted data — silently skip */
+            }
+        }
+
+        showToast() {
+            const toast = document.getElementById('saveToast');
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 1800);
+        }
+    }
+
+    new SlidePresentation();
+    const editor = new InlineEditor();
+</script>
+</body>
+</html>
