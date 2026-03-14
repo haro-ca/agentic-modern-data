@@ -8,3 +8,16 @@ write all the queries so far into a queries.sql file
 
 
 write an intermediate sales transaction table to my disk 
+
+
+write a script executable via uv (use uv add --script if you need to) that analizes sales_transactions.csv, use altair for dataviz and polars for dataframe operations.
+we don't need pyproject, all scripts are self executable
+
+
+add a previous step in the script that is redownloading sales_transactions.csv
+
+
+add a visualization dashboard via streamlit
+
+
+i think we now need a full uv init and then uv add the libraries

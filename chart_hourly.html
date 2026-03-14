@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    #vis.vega-embed {
+      width: 100%;
+      display: flex;
+    }
+
+    #vis.vega-embed details,
+    #vis.vega-embed details summary {
+      position: relative;
+    }
+  </style>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vega@6"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vega-lite@6.1.0"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vega-embed@7"></script>
+</head>
+<body>
+  <div id="vis"></div>
+  <script>
+    (function(vegaEmbed) {
+      var spec = {"config": {"view": {"continuousWidth": 300, "continuousHeight": 300}}, "data": {"name": "data-0d5738237b7a5a455b563c95319f98c5"}, "mark": {"type": "line", "point": true}, "encoding": {"tooltip": [{"field": "hour", "type": "quantitative"}, {"field": "transactions", "type": "quantitative"}], "x": {"field": "hour", "title": "Hour of Day", "type": "quantitative"}, "y": {"field": "transactions", "title": "Number of Transactions", "type": "quantitative"}}, "height": 300, "title": "Transactions by Hour of Day", "width": 600, "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json", "datasets": {"data-0d5738237b7a5a455b563c95319f98c5": [{"hour": 0, "transactions": 130}, {"hour": 1, "transactions": 120}, {"hour": 2, "transactions": 150}, {"hour": 3, "transactions": 131}, {"hour": 4, "transactions": 156}, {"hour": 5, "transactions": 152}, {"hour": 6, "transactions": 138}, {"hour": 7, "transactions": 127}, {"hour": 8, "transactions": 166}, {"hour": 9, "transactions": 137}, {"hour": 10, "transactions": 132}, {"hour": 11, "transactions": 144}, {"hour": 12, "transactions": 143}, {"hour": 13, "transactions": 142}, {"hour": 14, "transactions": 147}, {"hour": 15, "transactions": 131}, {"hour": 16, "transactions": 147}, {"hour": 17, "transactions": 132}, {"hour": 18, "transactions": 129}, {"hour": 19, "transactions": 140}, {"hour": 20, "transactions": 130}, {"hour": 21, "transactions": 142}, {"hour": 22, "transactions": 137}, {"hour": 23, "transactions": 130}]}};
+      var embedOpt = {"mode": "vega-lite"};
+
+      function showError(el, error){
+          el.innerHTML = ('<div style="color:red;">'
+                          + '<p>JavaScript Error: ' + error.message + '</p>'
+                          + "<p>This usually means there's a typo in your chart specification. "
+                          + "See the javascript console for the full traceback.</p>"
+                          + '</div>');
+          throw error;
+      }
+      const el = document.getElementById('vis');
+      vegaEmbed("#vis", spec, embedOpt)
+        .catch(error => showError(el, error));
+    })(vegaEmbed);
+
+  </script>
+</body>
+</html>
