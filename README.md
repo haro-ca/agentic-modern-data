@@ -1,36 +1,61 @@
-# MAC INSTALL
+# Agentic Modern Data
 
-## Homebrew (si no lo tienes)
-/bin/bash -c "$(curl -fsSL \
-  https://brew.sh/install.sh)"
+## Instalación
 
-## Herramientas
+### macOS
+
+#### Homebrew (si no lo tienes)
+
+```bash
+/bin/bash -c "$(curl -fsSL https://brew.sh/install.sh)"
+```
+
+#### Herramientas
+
+```bash
 brew install uv
 brew install libpq
 echo 'export PATH="...libpq/bin:$PATH"' >> ~/.zshrc
 brew install databricks
+```
 
-## opencode
+#### opencode
+
+```bash
 curl -fsSL opencode.ai/install | sh
+```
 
-## Verificar
+#### Verificar
+
+```bash
 uv --version && psql --version
+```
 
+---
 
-# WINDOWS INSTALL
+### Windows
 
-## winget (viene con Windows 11)
+#### winget (viene con Windows 11)
+
+```powershell
 winget install astral-sh.uv
 winget install Databricks.DatabricksCLI
+```
 
-## psql: descargar desde postgresql.org
-## Installer → solo "Command Line Tools"
-## Añadir bin al PATH del sistema
+#### psql
 
-## opencode
+Descargar desde [postgresql.org](https://www.postgresql.org/download/windows/). En el installer seleccionar solo **"Command Line Tools"** y añadir `bin` al PATH del sistema.
+
+#### opencode
+
+```powershell
 iwr opencode.ai/install.ps1 | iex
+```
 
-## Verificar (nueva terminal)
+#### Verificar (nueva terminal)
+
+```powershell
 uv --version
 psql --version
 databricks --version
+```
