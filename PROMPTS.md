@@ -31,3 +31,9 @@ we have too much files being created, create a duckdb database (uv add duckdb if
 
 
 give me queries to explore the partitions via uv run duckdb 
+
+
+we have databricks cli here, use it to store the downloads there instead of duckdb 
+
+
+use the Serverless Starter Warehouse

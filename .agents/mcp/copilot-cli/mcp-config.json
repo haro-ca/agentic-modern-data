@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "databricks": {
+      "type": "http",
+      "url": "https://<WORKSPACE-HOSTNAME>/api/2.0/mcp/genie/<GENIE-SPACE-ID>",
+      "headers": {
+        "Authorization": "Bearer <PAT>"
+      }
+    }
+  }
+}
