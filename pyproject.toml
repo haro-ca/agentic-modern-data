@@ -1,0 +1,11 @@
+[project]
+name = "agentic-modern-data"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "jupyter>=1.1.1",
+    "notebook>=7.5.5",
+    "polars>=1.39.0",
+]
