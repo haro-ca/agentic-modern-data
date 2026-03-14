@@ -21,3 +21,13 @@ add a visualization dashboard via streamlit
 
 
 i think we now need a full uv init and then uv add the libraries
+
+
+we need to version the downloads, move the downloads to a data/raw folder and add date and time. streamlit just takes the last version.
+
+
+we have too much files being created, create a duckdb database (uv add duckdb if you need to) and let's store partitioned by download data and time.
+
+
+
+give me queries to explore the partitions via uv run duckdb 
