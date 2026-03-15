@@ -1,9 +1,11 @@
 """ETL: Neon Postgres → Databricks Unity Catalog (workspace.default)
 
-- Static tables: CREATE OR REPLACE TABLE (1 SQL call per table, full replace)
-- sales_transactions: COPY INTO from a timestamped Parquet per run.
-  Delta tracks which files were already loaded — no watermark file needed.
-- Parquet files are kept locally in data/parquet/ for inspection.
+Uses delta-rs (deltalake) to write Arrow data directly to Delta format locally,
+then uploads the Delta directory to a Databricks Volume.
+
+- Static tables: overwrite local Delta → upload → CREATE OR REPLACE TABLE USING DELTA LOCATION
+- sales_transactions: append new rows only (local Delta is the watermark) → upload
+  → table auto-reflects new data via LOCATION (no extra SQL needed after first run)
 
 Usage: uv run etl_to_databricks.py
 """
@@ -11,10 +13,11 @@ Usage: uv run etl_to_databricks.py
 import json
 import subprocess
 import time
-from datetime import datetime, timezone
 from pathlib import Path
 
 import duckdb
+import pyarrow.compute as pc
+from deltalake import DeltaTable, write_deltalake
 
 NEON_URL = "postgresql://neondb_owner:npg_y5gFCSeLB2pz@ep-snowy-forest-adlwtnc0.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require"
 DATABRICKS_PROFILE = "dbc-df3c4dbf-3ef7"
@@ -23,9 +26,9 @@ CATALOG = "workspace"
 SCHEMA = "default"
 VOLUME = "staging"
 
-PARQUET_DIR = Path("data/parquet")
+DELTA_DIR = Path("data/delta")
 
-# Tables fully replaced on every run (1 SQL call each)
+# Tables fully replaced on every run
 STATIC_TABLES = [
     "sales_customers",
     "sales_franchises",
@@ -34,7 +37,7 @@ STATIC_TABLES = [
     "media_gold_reviews_chunked",
 ]
 
-# Tables loaded via COPY INTO (Delta auto-tracks which files were ingested)
+# Tables loaded incrementally (append-only, local Delta acts as watermark)
 INCREMENTAL_TABLES = ["sales_transactions"]
 
 
@@ -81,66 +84,70 @@ def run_sql(statement):
     return resp
 
 
-def export_and_upload(duck, table: str, parquet_path: Path) -> tuple[int, str]:
-    duck.execute(
-        f"COPY (SELECT * FROM neon.public.{table}) TO '{parquet_path}' (FORMAT PARQUET)"
-    )
-    count = duck.execute(f"SELECT COUNT(*) FROM read_parquet('{parquet_path}')").fetchone()[0]
-    size_kb = parquet_path.stat().st_size / 1024
-    print(f"  Exported {count} rows ({size_kb:.0f} KB)")
+def write_and_upload(arrow_tbl, table: str, mode: str) -> str:
+    """Write Arrow table to local Delta, upload directory to Volume. Returns volume path."""
+    local_path = DELTA_DIR / table
+    volume_path = f"/Volumes/{CATALOG}/{SCHEMA}/{VOLUME}/delta/{table}"
 
-    remote_path = f"/Volumes/{CATALOG}/{SCHEMA}/{VOLUME}/{parquet_path.name}"
+    write_deltalake(str(local_path), arrow_tbl, mode=mode, schema_mode="overwrite")
+    size_kb = sum(f.stat().st_size for f in local_path.rglob("*") if f.is_file()) / 1024
+    print(f"  Written {arrow_tbl.num_rows} rows → local Delta ({size_kb:.0f} KB total)")
+
     subprocess.run(
-        ["databricks", "fs", "cp", str(parquet_path), f"dbfs:{remote_path}",
-         "--overwrite", "--profile", DATABRICKS_PROFILE],
+        ["databricks", "fs", "cp", str(local_path), f"dbfs:{volume_path}",
+         "--recursive", "--overwrite", "--profile", DATABRICKS_PROFILE],
         check=True, capture_output=True, text=True,
     )
-    print(f"  Uploaded → {parquet_path.name}")
-    return count, remote_path
+    print(f"  Uploaded → {volume_path}")
+    return volume_path
 
 
 def etl():
-    PARQUET_DIR.mkdir(parents=True, exist_ok=True)
+    DELTA_DIR.mkdir(parents=True, exist_ok=True)
 
     duck = duckdb.connect()
     duck.execute("INSTALL postgres; LOAD postgres;")
     duck.execute(f"ATTACH '{NEON_URL}' AS neon (TYPE POSTGRES, READ_ONLY);")
     print("✓ Connected to Neon Postgres\n")
 
-    # --- Static tables: CREATE OR REPLACE (1 SQL call per table) ---
+    # --- Static tables: overwrite Delta, register via LOCATION ---
     for table in STATIC_TABLES:
         print(f"--- {table} ---")
-        count, remote_path = export_and_upload(duck, table, PARQUET_DIR / f"{table}.parquet")
-        fqn = f"{CATALOG}.{SCHEMA}.{table}"
-        run_sql(f"CREATE OR REPLACE TABLE {fqn} AS SELECT * FROM read_files('{remote_path}')")
-        print(f"  ✓ replaced ({count} rows)")
+        arrow_tbl = duck.execute(f"SELECT * FROM neon.public.{table}").to_arrow_table()
+        volume_path = write_and_upload(arrow_tbl, table, mode="overwrite")
 
-    # --- Incremental tables: COPY INTO (Delta tracks loaded files automatically) ---
+        fqn = f"{CATALOG}.{SCHEMA}.{table}"
+        run_sql(f"CREATE OR REPLACE TABLE {fqn} USING DELTA LOCATION '{volume_path}'")
+        print(f"  ✓ registered ({arrow_tbl.num_rows} rows)")
+
+    # --- Incremental tables: append new rows, local Delta is the watermark ---
     for table in INCREMENTAL_TABLES:
         print(f"--- {table} (incremental) ---")
-        run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-        parquet_path = PARQUET_DIR / f"{table}_{run_id}.parquet"
-
-        count, remote_path = export_and_upload(duck, table, parquet_path)
-
+        local_path = DELTA_DIR / table
         fqn = f"{CATALOG}.{SCHEMA}.{table}"
-        volume_folder = f"/Volumes/{CATALOG}/{SCHEMA}/{VOLUME}/"
+        volume_path = f"/Volumes/{CATALOG}/{SCHEMA}/{VOLUME}/delta/{table}"
 
-        # Ensure target table exists on first run
-        run_sql(
-            f"CREATE TABLE IF NOT EXISTS {fqn} "
-            f"AS SELECT * FROM read_files('{remote_path}') WHERE 1=0"
-        )
-        # COPY INTO skips files it has already loaded (tracked in Delta metadata)
-        run_sql(f"""
-            COPY INTO {fqn}
-            FROM '{volume_folder}'
-            FILEFORMAT = PARQUET
-            PATTERN = '{table}_*.parquet'
-            FORMAT_OPTIONS ('mergeSchema' = 'true')
-            COPY_OPTIONS ('mergeSchema' = 'true')
-        """)
-        print(f"  ✓ COPY INTO complete")
+        if local_path.exists():
+            # Use local Delta max timestamp as watermark — no separate file needed
+            dt_local = DeltaTable(str(local_path))
+            max_ts = pc.max(dt_local.to_pyarrow_table(columns=["datetime"]).column("datetime")).as_py()
+            print(f"  Watermark: {max_ts}")
+            arrow_tbl = duck.execute(
+                f"SELECT * FROM neon.public.{table} WHERE datetime > TIMESTAMP '{max_ts}'"
+            ).to_arrow_table()
+        else:
+            arrow_tbl = duck.execute(f"SELECT * FROM neon.public.{table}").to_arrow_table()
+
+        if arrow_tbl.num_rows == 0:
+            print(f"  No new rows")
+        else:
+            write_and_upload(arrow_tbl, table, mode="append")
+            # First run: register the LOCATION table. Subsequent runs: uploading
+            # updated _delta_log is enough — LOCATION tables reflect new files automatically.
+            run_sql(
+                f"CREATE TABLE IF NOT EXISTS {fqn} USING DELTA LOCATION '{volume_path}'"
+            )
+            print(f"  ✓ {arrow_tbl.num_rows} rows appended")
 
     duck.close()
     print("\n✓ ETL complete — all tables in workspace.default")
