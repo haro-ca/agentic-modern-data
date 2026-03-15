@@ -1,0 +1,11 @@
+# Data files — never commit raw/processed data
+data/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# OS
+.DS_Store
