@@ -11,7 +11,9 @@ Usage: uv run etl_to_databricks.py
 """
 
 import json
+import shutil
 import subprocess
+import tempfile
 import time
 from pathlib import Path
 
@@ -85,21 +87,47 @@ def run_sql(statement):
 
 
 def write_and_upload(arrow_tbl, table: str, mode: str) -> str:
-    """Write Arrow table to local Delta, upload directory to Volume. Returns volume path."""
+    """Write Arrow table to local Delta, upload data parquet files to Volume.
+
+    Only parquet data files are uploaded — _delta_log stays local as watermark.
+    Overwrite: uploads to a versioned subdirectory so read_files never sees stale files.
+    Append: uploads new files to a stable path; COPY INTO handles dedup by filename.
+    Returns the Volume path used for the SQL statement.
+    """
     local_path = DELTA_DIR / table
-    volume_path = f"/Volumes/{CATALOG}/{SCHEMA}/{VOLUME}/delta/{table}"
 
-    write_deltalake(str(local_path), arrow_tbl, mode=mode, schema_mode="overwrite")
-    size_kb = sum(f.stat().st_size for f in local_path.rglob("*") if f.is_file()) / 1024
-    print(f"  Written {arrow_tbl.num_rows} rows → local Delta ({size_kb:.0f} KB total)")
+    # Capture existing files to identify only newly-written files after the write
+    before_uris: set[str] = set(DeltaTable(str(local_path)).file_uris()) if local_path.exists() else set()
 
-    subprocess.run(
-        ["databricks", "fs", "cp", str(local_path), f"dbfs:{volume_path}",
-         "--recursive", "--overwrite", "--profile", DATABRICKS_PROFILE],
-        check=True, capture_output=True, text=True,
-    )
-    print(f"  Uploaded → {volume_path}")
-    return volume_path
+    if mode == "overwrite":
+        shutil.rmtree(local_path, ignore_errors=True)
+
+    write_deltalake(str(local_path), arrow_tbl, mode=mode)
+
+    new_uris = sorted(set(DeltaTable(str(local_path)).file_uris()) - before_uris)
+    size_kb = sum(Path(f).stat().st_size for f in new_uris) / 1024
+    print(f"  Written {arrow_tbl.num_rows} rows → local Delta ({size_kb:.0f} KB)")
+
+    # For overwrite: use a versioned sub-path so read_files only sees this run's files.
+    # For append: use a stable path; COPY INTO deduplicates by filename.
+    base_path = f"/Volumes/{CATALOG}/{SCHEMA}/{VOLUME}/parquet/{table}"
+    if mode == "overwrite":
+        upload_path = f"{base_path}/{int(time.time())}"
+    else:
+        upload_path = base_path
+
+    # Copy new parquet files into a temp dir, then upload with --recursive
+    # (--recursive creates the destination directory if it doesn't exist)
+    with tempfile.TemporaryDirectory() as tmpdir:
+        for abs_path in new_uris:
+            shutil.copy2(abs_path, Path(tmpdir) / Path(abs_path).name)
+        subprocess.run(
+            ["databricks", "fs", "cp", tmpdir, f"dbfs:{upload_path}",
+             "--recursive", "--overwrite", "--profile", DATABRICKS_PROFILE],
+            check=True, capture_output=True, text=True,
+        )
+    print(f"  Uploaded {len(new_uris)} parquet file(s) → {upload_path}")
+    return upload_path
 
 
 def etl():
@@ -110,22 +138,29 @@ def etl():
     duck.execute(f"ATTACH '{NEON_URL}' AS neon (TYPE POSTGRES, READ_ONLY);")
     print("✓ Connected to Neon Postgres\n")
 
-    # --- Static tables: overwrite Delta, register via LOCATION ---
+    # --- Static tables: overwrite Delta, load into managed table via read_files ---
     for table in STATIC_TABLES:
         print(f"--- {table} ---")
         arrow_tbl = duck.execute(f"SELECT * FROM neon.public.{table}").to_arrow_table()
         volume_path = write_and_upload(arrow_tbl, table, mode="overwrite")
 
         fqn = f"{CATALOG}.{SCHEMA}.{table}"
-        run_sql(f"CREATE OR REPLACE TABLE {fqn} USING DELTA LOCATION '{volume_path}'")
-        print(f"  ✓ registered ({arrow_tbl.num_rows} rows)")
+        run_sql(
+            f"CREATE OR REPLACE TABLE {fqn} AS "
+            f"SELECT * FROM read_files('{volume_path}/', format => 'parquet')"
+        )
+        print(f"  ✓ loaded ({arrow_tbl.num_rows} rows)")
 
     # --- Incremental tables: append new rows, local Delta is the watermark ---
     for table in INCREMENTAL_TABLES:
         print(f"--- {table} (incremental) ---")
         local_path = DELTA_DIR / table
         fqn = f"{CATALOG}.{SCHEMA}.{table}"
-        volume_path = f"/Volumes/{CATALOG}/{SCHEMA}/{VOLUME}/delta/{table}"
+        stable_volume_path = f"/Volumes/{CATALOG}/{SCHEMA}/{VOLUME}/parquet/{table}"
+
+        # Guard against empty/corrupted local delta directories
+        if local_path.exists() and not DeltaTable.is_deltatable(str(local_path)):
+            shutil.rmtree(local_path, ignore_errors=True)
 
         if local_path.exists():
             # Use local Delta max timestamp as watermark — no separate file needed
@@ -138,16 +173,25 @@ def etl():
         else:
             arrow_tbl = duck.execute(f"SELECT * FROM neon.public.{table}").to_arrow_table()
 
+        first_run = not local_path.exists()
+
         if arrow_tbl.num_rows == 0:
-            print(f"  No new rows")
+            print(f"  No new rows, nothing to do")
         else:
             write_and_upload(arrow_tbl, table, mode="append")
-            # First run: register the LOCATION table. Subsequent runs: uploading
-            # updated _delta_log is enough — LOCATION tables reflect new files automatically.
-            run_sql(
-                f"CREATE TABLE IF NOT EXISTS {fqn} USING DELTA LOCATION '{volume_path}'"
-            )
-            print(f"  ✓ {arrow_tbl.num_rows} rows appended")
+            if first_run:
+                # First run: create managed table from the Volume parquet files
+                run_sql(
+                    f"CREATE TABLE IF NOT EXISTS {fqn} AS "
+                    f"SELECT * FROM read_files('{stable_volume_path}/', format => 'parquet')"
+                )
+                print(f"  ✓ {arrow_tbl.num_rows} rows loaded (initial)")
+            else:
+                # Subsequent runs: COPY INTO only loads files not yet seen
+                run_sql(
+                    f"COPY INTO {fqn} FROM '{stable_volume_path}/' FILEFORMAT = PARQUET"
+                )
+                print(f"  ✓ {arrow_tbl.num_rows} new rows appended via COPY INTO")
 
     duck.close()
     print("\n✓ ETL complete — all tables in workspace.default")
